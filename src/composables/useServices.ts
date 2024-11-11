@@ -1,42 +1,61 @@
-import { ref, onBeforeMount } from 'vue'
-import axios from 'axios'
+import type {
+  Service,
+  Version,
+  Metrics,
+  Developer,
+  ProcessedService,
+} from '@/types/serviceTypes'
+export function useServices(serviceResponse: Service[]) {
+  const getVersionCount = (versions: Version[] = []): string | null => {
+    if (versions.length === 0) return null
+    return `${versions.length} version${versions.length > 1 ? 's' : ''}`
+  }
 
-// This composable is a simplified example for the exercise **and could likely be improved**.
-// Feel free to leave as-is, modify, or remove this file (and any others) as desired.
-// https://vuejs.org/guide/reusability/composables.html
+  const getServiceStatus = (service: Service) => {
+    if (service.configured && service.published) return 'PUBLISHED'
+    if (service.configured && !service.published) return 'UNPUBLISHED'
+    return 'IN_PROGRESS'
+  }
 
-export default function useServices(): any {
-  const services = ref<any[]>([])
-  const loading = ref<any>(false)
-  const error = ref<any>(false)
-
-  const getServices = async (): Promise<any> => {
-    try {
-      // Initialize loading state
-      loading.value = true
-
-      // Fetch data from the API
-      const { data } = await axios.get('/api/services')
-
-      // Store data in Vue ref
-      services.value = data
-    } catch (err: any) {
-      error.value = true
-    } finally {
-      // Reset loading state
-      loading.value = false
+  const getServiceMetrics = (metrics?: Metrics) => {
+    if (!metrics) return null
+    return {
+      latency: metrics?.latency,
+      uptime: `${(metrics?.uptime * 100).toFixed(1)}%`,
+      request: `${(metrics?.requests / 1000).toFixed(1)}k`,
+      errors: `${(metrics?.errors * 100).toFixed(1)}%`,
     }
   }
 
-  onBeforeMount(async (): Promise<void> => {
-    // Fetch services from the API
-    await getServices()
-  })
+  const getUniqueDevelopers = (versions: Version[]) => {
+    const uniqueDevelopers: { [key: string]: Developer } = {}
+    versions.forEach((version: Version) => {
+      const developer = version?.developer
+      if (developer?.email) {
+        uniqueDevelopers[developer.email] = developer
+      }
+    })
 
-  // Return stateful data
+    return Object.values(uniqueDevelopers)
+  }
+
+  const processedServices: ProcessedService[] = serviceResponse.map(
+    (service) => ({
+      id: service.id,
+      name: service.name,
+      description: service.description,
+      type: service.type,
+      versions: service.versions,
+      versionCount: getVersionCount(service?.versions),
+      status: getServiceStatus(service),
+      serviceMetrics: getServiceMetrics(service?.metrics),
+      uniqueDevelopers: service?.versions?.length
+        ? getUniqueDevelopers(service?.versions)
+        : [],
+    }),
+  )
+
   return {
-    services,
-    loading,
-    error,
+    processedServices,
   }
 }

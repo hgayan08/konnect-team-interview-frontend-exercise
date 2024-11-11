@@ -198,3 +198,25 @@ pnpm commit
 ```
 
 This will trigger the Commitizen interactive prompt for building your commit message.
+
+
+
+### Project Summary
+
+- On page load, we call the service API to fetch data, displaying 9 items per page with corresponding pagination.
+- A search feature allows users to search for specific services 
+  - Debounce feature is added the the search
+  - Improvement: More sanitization the user’s search query to prevent potential issues.
+- The "Service Package" CTA currently does nothing but logs a string to the console.
+- A refresh button allows users to re-fetch services, updating the cached data.
+  - Improvement: Along with the Refresh CTA, we can provide a dropdown menu for selecting time intervals, allowing the page to auto-refresh at the chosen interval.
+- Each card displays information about a specific service.
+- Transform the service response to properly display information on each card
+  - Showing a default avatar if the avatar link is broken in the response.
+  - The developer count and avatar is unique for each service.
+- On clicking a service card, we redirect the user to the service details page.
+  - When the user clicks on a specific service card, the data is stored in the Pinia store, and we render the data from the store on the service details page.
+  - Upon refresh, we call the service API again and filter the data using the service ID retrieved from the route parameters to ensure the data on the page remains persistent.
+- Server error, empty state handled
+- Strived to achieve maximum responsiveness wherever possible
+- Improvement: Test cases could have been written, but were not due to time constraints.
